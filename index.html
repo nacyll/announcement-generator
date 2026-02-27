@@ -293,13 +293,18 @@
             }
         });
 
-        // 实时监听数据变化
+        // 实时监听数据变化 - 修复：处理空数据情况确保所有人同步
         announcementRef.on('value', (snapshot) => {
             const data = snapshot.val();
             if (data && data.items) {
                 announcements = data.items;
                 renderAnnouncementList();
                 document.getElementById('announcementList').classList.add('show');
+            } else {
+                announcements = [];
+                renderAnnouncementList();
+                document.getElementById('announcementList').classList.remove('show');
+                document.getElementById('finalAnnouncement').classList.remove('show');
             }
         });
 
