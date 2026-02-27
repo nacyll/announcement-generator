@@ -319,6 +319,11 @@
             if (document.getElementById('passwordInput').value === PASSWORD) {
                 document.getElementById('loginPage').style.display = 'none';
                 document.getElementById('mainPage').classList.add('show');
+                // 登录后手动刷新显示已有数据
+                if (announcements.length > 0) {
+                    renderAnnouncementList();
+                    document.getElementById('announcementList').classList.add('show');
+                }
             } else {
                 document.getElementById('errorMsg').textContent = '密码错误，请重试';
             }
