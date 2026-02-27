@@ -49,7 +49,7 @@
         }
         .identity-selector {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
             gap: 10px;
         }
         .identity-btn {
@@ -138,6 +138,7 @@
             cursor: pointer;
         }
         .confirm-btn { background: #4caf50; color: white; }
+        .confirm-btn:disabled { background: #ccc; cursor: not-allowed; }
         .unconfirm-btn { background: #f44336; color: white; }
         .edit-btn { background: #2196f3; color: white; }
         .copy-btn { background: #ff9800; color: white; }
@@ -224,35 +225,49 @@
             z-index: 1000;
         }
         .toast.show { opacity: 1; }
+        .identity-hint {
+            color: #f44336;
+            font-size: 13px;
+            margin-top: 10px;
+            display: none;
+        }
+        .identity-hint.show { display: block; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>📢 公告生成器</h1>
-            <p>选择身份 → 输入内容 → 确认生成</p>
+            <p>输入内容 → 选择身份 → 确认生成</p>
         </div>
         <div class="content">
+            <!-- 步骤1: 输入公告内容 -->
             <div class="section">
-                <div class="section-title">步骤 1：选择操作身份</div>
+                <div class="section-title">步骤 1：输入公告内容</div>
+                <textarea id="announcementInput" placeholder="请输入公告内容..."></textarea>
+                <button class="generate-btn" id="generateBtn" disabled>生成公告列表</button>
+            </div>
+
+            <!-- 步骤2: 选择身份 -->
+            <div class="section">
+                <div class="section-title">步骤 2：选择操作身份</div>
                 <div class="identity-selector">
-                    <button class="identity-btn" data-name="嘉慧">嘉慧</button>
                     <button class="identity-btn" data-name="牛牛">牛牛</button>
                     <button class="identity-btn" data-name="韵琳">韵琳</button>
                     <button class="identity-btn" data-name="家豪">家豪</button>
                     <button class="identity-btn" data-name="国平">国平</button>
                 </div>
                 <div class="selected-identity" id="selectedIdentity">当前操作者：<span id="identityName"></span></div>
+                <div class="identity-hint" id="identityHint">⚠️ 请先选择身份后再确认公告</div>
             </div>
-            <div class="section">
-                <div class="section-title">步骤 2：输入公告内容</div>
-                <textarea id="announcementInput" placeholder="请输入公告内容..."></textarea>
-                <button class="generate-btn" id="generateBtn" disabled>生成公告列表</button>
-            </div>
+
+            <!-- 步骤3: 公告列表 -->
             <div class="section">
                 <div class="section-title">步骤 3：确认公告内容</div>
                 <div class="announcement-list" id="announcementList"></div>
             </div>
+
+            <!-- 最终公告 -->
             <div class="final-announcement" id="finalAnnouncement">
                 <div class="final-title">
                     <span>✅ 正式公告</span>
@@ -268,6 +283,7 @@
         let selectedIdentity = '';
         let announcements = [];
 
+        // 身份选择
         document.querySelectorAll('.identity-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 document.querySelectorAll('.identity-btn').forEach(b => b.classList.remove('active'));
@@ -275,17 +291,17 @@
                 selectedIdentity = this.dataset.name;
                 document.getElementById('identityName').textContent = selectedIdentity;
                 document.getElementById('selectedIdentity').classList.add('show');
-                checkCanGenerate();
+                document.getElementById('identityHint').classList.remove('show');
+                renderAnnouncementList();
             });
         });
 
-        document.getElementById('announcementInput').addEventListener('input', checkCanGenerate);
+        // 输入内容监听
+        document.getElementById('announcementInput').addEventListener('input', function() {
+            document.getElementById('generateBtn').disabled = !this.value.trim();
+        });
 
-        function checkCanGenerate() {
-            const input = document.getElementById('announcementInput').value.trim();
-            document.getElementById('generateBtn').disabled = !(selectedIdentity && input);
-        }
-
+        // 生成列表
         document.getElementById('generateBtn').addEventListener('click', function() {
             const input = document.getElementById('announcementInput').value.trim();
             if (!input) return;
@@ -358,7 +374,7 @@
                         <div class="item-content">${highlightContent(item.content)}</div>
                         <div class="item-actions">
                             ${!item.confirmed ? `
-                                <button class="action-btn confirm-btn" onclick="confirmItem(${index})">✓ 确认</button>
+                                <button class="action-btn confirm-btn" onclick="confirmItem(${index})" ${!selectedIdentity ? 'disabled' : ''}>✓ 确认</button>
                             ` : `
                                 <span class="confirmed-badge show">✓ ${item.confirmedBy} ${item.confirmedTime}</span>
                                 <button class="action-btn unconfirm-btn" onclick="unconfirmItem(${index})">✗ 取消</button>
@@ -389,6 +405,10 @@
         }
 
         function confirmItem(index) {
+            if (!selectedIdentity) {
+                document.getElementById('identityHint').classList.add('show');
+                return;
+            }
             announcements[index].confirmed = true;
             announcements[index].confirmedBy = selectedIdentity;
             announcements[index].confirmedTime = new Date().toLocaleTimeString('zh-CN', {hour: '2-digit', minute: '2-digit'});
@@ -411,8 +431,6 @@
             if (newContent) {
                 announcements[index].content = newContent;
                 announcements[index].confirmed = false;
-                announcements[index].confirmedBy = '';
-                announcements[index].confirmedTime = '';
                 renderAnnouncementList();
             }
         }
