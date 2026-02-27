@@ -340,21 +340,6 @@
             document.getElementById('announcementList').classList.add('show');
         });
 
-        document.getElementById('loadBtn').addEventListener('click', function() {
-            showToast('正在加载云端数据...');
-        });
-
-        document.getElementById('clearBtn').addEventListener('click', function() {
-            if (confirm('确定要清空云端所有公告数据吗？')) {
-                announcementRef.remove();
-                announcements = [];
-                renderAnnouncementList();
-                document.getElementById('announcementList').classList.remove('show');
-                document.getElementById('finalAnnouncement').classList.remove('show');
-                showToast('已清空云端数据');
-            }
-        });
-
         function saveToFirebase() {
             announcementRef.set({ items: announcements, updatedAt: Date.now() });
         }
@@ -424,4 +409,3 @@
     </script>
 </body>
 </html>
-
