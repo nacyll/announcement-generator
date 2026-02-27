@@ -290,8 +290,10 @@
         });
 
         // 修复：正确处理Firebase数组转换
+        // Firebase监听器 - 实时同步所有人的修改
         announcementRef.on('value', (snapshot) => {
             const data = snapshot.val();
+            console.log('实时监听到数据:', data); // 调试
             if (data && data.items) {
                 const items = data.items;
                 if (Array.isArray(items)) {
@@ -302,13 +304,15 @@
                         if (items[key]) announcements.push(items[key]);
                     });
                 }
-                renderAnnouncementList();
-                document.getElementById('announcementList').classList.add('show');
             } else {
                 announcements = [];
+            }
+            // 如果已经登录（主页面可见），立即更新列表
+            if (document.getElementById('mainPage').classList.contains('show')) {
                 renderAnnouncementList();
-                document.getElementById('announcementList').classList.remove('show');
-                document.getElementById('finalAnnouncement').classList.remove('show');
+                if (announcements.length > 0) {
+                    document.getElementById('announcementList').classList.add('show');
+                }
             }
         });
 
