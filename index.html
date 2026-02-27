@@ -160,6 +160,7 @@
         .generate-btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
+            transform: none;
         }
 
         .announcement-list {
@@ -197,10 +198,6 @@
             word-wrap: break-word;
         }
 
-        .item-content.highlight-time {
-            /* 时间和数字会被标红 */
-        }
-
         .item-content .highlight {
             color: #e53935;
             font-weight: 500;
@@ -211,6 +208,8 @@
             gap: 8px;
             flex-shrink: 0;
             margin-left: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
         }
 
         .action-btn {
@@ -268,6 +267,7 @@
             padding: 4px 10px;
             background: white;
             border-radius: 12px;
+            border: 1px solid #4caf50;
         }
 
         .confirmed-badge.show {
@@ -397,10 +397,11 @@
             <div class="section">
                 <div class="section-title">步骤 1：选择操作身份</div>
                 <div class="identity-selector">
-                    <button class="identity-btn" data-name="张三">张三</button>
-                    <button class="identity-btn" data-name="李四">李四</button>
-                    <button class="identity-btn" data-name="王五">王五</button>
-                    <button class="identity-btn" data-name="赵六">赵六</button>
+                    <button class="identity-btn" data-name="嘉慧">嘉慧</button>
+                    <button class="identity-btn" data-name="牛牛">牛牛</button>
+                    <button class="identity-btn" data-name="韵琳">韵琳</button>
+                    <button class="identity-btn" data-name="家豪">家豪</button>
+                    <button class="identity-btn" data-name="国平">国平</button>
                 </div>
                 <div class="selected-identity" id="selectedIdentity">
                     当前操作者：<span id="identityName"></span>
@@ -476,37 +477,34 @@
             const lines = text.split('\n');
             const items = [];
             let currentItem = '';
-            let itemNumber = '';
 
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i].trim();
                 if (!line) continue;
 
-                // 检查是否是新的项目（数字+点开头 或 中文数字+点开头）
                 const match = line.match(/^(\d+\.|[一二三四五六七八九十]+\.)/);
                 
                 if (match) {
-                    // 保存上一个项目
                     if (currentItem) {
                         items.push({
                             content: currentItem.trim(),
                             confirmed: false,
+                            confirmedBy: '',
+                            confirmedTime: '',
                             editing: false,
                             originalContent: currentItem.trim()
                         });
                     }
-                    // 开始新项目
                     currentItem = line;
-                    itemNumber = match[1];
                 } else {
-                    // 继续当前项目
                     if (currentItem) {
                         currentItem += '\n' + line;
                     } else {
-                        // 标题行
                         items.push({
                             content: line,
                             confirmed: false,
+                            confirmedBy: '',
+                            confirmedTime: '',
                             editing: false,
                             originalContent: line
                         });
@@ -514,11 +512,12 @@
                 }
             }
 
-            // 添加最后一个项目
             if (currentItem) {
                 items.push({
                     content: currentItem.trim(),
                     confirmed: false,
+                    confirmedBy: '',
+                    confirmedTime: '',
                     editing: false,
                     originalContent: currentItem.trim()
                 });
@@ -542,13 +541,10 @@
                             ${!item.confirmed ? `
                                 <button class="action-btn confirm-btn" onclick="confirmItem(${index})">✓ 确认</button>
                             ` : `
-                                <span class="confirmed-badge show">✓ 已确认</span>
+                                <span class="confirmed-badge show">✓ ${item.confirmedBy} ${item.confirmedTime}</span>
                             `}
                             <button class="action-btn edit-btn" onclick="editItem(${index})">✎ 编辑</button>
                             <button class="action-btn copy-btn" onclick="copyItem(${index})">📋 复制</button>
-                            ${item.confirmed && item.content !== item.originalContent ? `
-                                <button class="action-btn reconfirm-btn" onclick="reconfirmItem(${index})">↻ 重新确认</button>
-                            ` : ''}
                         </div>
                     </div>
                     <div class="edit-area" id="edit-${index}">
@@ -565,61 +561,45 @@
             checkAllConfirmed();
         }
 
-        // 高亮时间和数字
         function highlightContent(content) {
-            // 匹配日期时间格式
             return content.replace(/(\d{4}年)?\d{1,2}月\d{1,2}日|(\d{1,2}:\d{2})/g, '<span class="highlight">$&</span>')
                          .replace(/(\d+)(级|倍|折|次|个|名|期)/g, '<span class="highlight">$1</span>$2')
                          .replace(/\n/g, '<br>');
         }
 
-        // 确认项目
         function confirmItem(index) {
             announcements[index].confirmed = true;
+            announcements[index].confirmedBy = selectedIdentity;
+            announcements[index].confirmedTime = new Date().toLocaleTimeString('zh-CN', {hour: '2-digit', minute: '2-digit'});
             renderAnnouncementList();
         }
 
-        // 重新确认
-        function reconfirmItem(index) {
-            announcements[index].confirmed = true;
-            announcements[index].originalContent = announcements[index].content;
-            renderAnnouncementList();
-        }
-
-        // 编辑项目
         function editItem(index) {
-            announcements[index].editing = true;
             document.getElementById(`edit-${index}`).classList.add('show');
         }
 
-        // 保存编辑
         function saveEdit(index) {
             const newContent = document.getElementById(`textarea-${index}`).value.trim();
             if (newContent) {
                 announcements[index].content = newContent;
                 announcements[index].confirmed = false;
-                announcements[index].editing = false;
+                announcements[index].confirmedBy = '';
+                announcements[index].confirmedTime = '';
                 renderAnnouncementList();
             }
         }
 
-        // 取消编辑
         function cancelEdit(index) {
-            announcements[index].editing = false;
             document.getElementById(`edit-${index}`).classList.remove('show');
         }
 
-        // 复制单项
         function copyItem(index) {
-            const content = announcements[index].content;
-            copyToClipboard(content);
+            copyToClipboard(announcements[index].content);
             showToast('已复制该条内容');
         }
 
-        // 检查是否全部确认
         function checkAllConfirmed() {
             allConfirmed = announcements.length > 0 && announcements.every(item => item.confirmed);
-            
             if (allConfirmed) {
                 generateFinalAnnouncement();
             } else {
@@ -627,41 +607,34 @@
             }
         }
 
-        // 生成最终公告
         function generateFinalAnnouncement() {
             const content = announcements.map(item => item.content).join('\n\n');
             document.getElementById('finalContent').innerHTML = highlightContent(content);
             document.getElementById('finalAnnouncement').classList.add('show');
         }
 
-        // 复制全部
         document.getElementById('copyAllBtn').addEventListener('click', function() {
             const content = announcements.map(item => item.content).join('\n\n');
-            const finalText = `操作者：${selectedIdentity}\n\n${content}`;
-            copyToClipboard(finalText);
+            copyToClipboard(content);
             showToast('已复制完整公告');
         });
 
-        // 复制到剪贴板
         function copyToClipboard(text) {
-            const textarea = document.createElement('textarea');
-            textarea.value = text;
-            textarea.style.position = 'fixed';
-            textarea.style.opacity = '0';
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textarea);
+            navigator.clipboard.writeText(text).catch(() => {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+            });
         }
 
-        // 显示提示
         function showToast(message) {
             const toast = document.getElementById('toast');
             toast.textContent = message;
             toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 2000);
+            setTimeout(() => toast.classList.remove('show'), 2000);
         }
     </script>
 </body>
