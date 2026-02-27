@@ -255,12 +255,10 @@
     </div>
     <div class="toast" id="toast"></div>
 
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
     <script>
-        // Firebase 配置
         const firebaseConfig = {
             apiKey: "AIzaSyDh5lG_Y-vi4JJz0BKGciJozuTUzyc_Uqs",
             authDomain: "announcement-1d3b8.firebaseapp.com",
@@ -272,7 +270,6 @@
             measurementId: "G-JTH1FG6378"
         };
 
-        // 初始化 Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         const announcementRef = database.ref('announcements');
@@ -281,7 +278,6 @@
         let selectedIdentity = '';
         let announcements = [];
 
-        // 监听连接状态
         database.ref('.info/connected').on('value', (snap) => {
             const status = document.getElementById('syncStatus');
             if (snap.val() === true) {
@@ -293,11 +289,11 @@
             }
         });
 
-        // 实时监听数据变化 - 修复：处理空数据情况确保所有人同步
+        // 修复：确保Firebase返回的数据正确转换为数组
         announcementRef.on('value', (snapshot) => {
             const data = snapshot.val();
             if (data && data.items) {
-                announcements = data.items;
+                announcements = Array.isArray(data.items) ? data.items : Object.values(data.items);
                 renderAnnouncementList();
                 document.getElementById('announcementList').classList.add('show');
             } else {
@@ -354,13 +350,11 @@
             const items = [];
             let currentContent = '';
             let lastLineEmpty = true;
-
             for (let line of lines) {
                 const trimmedLine = line.trim();
                 if (!trimmedLine) { lastLineEmpty = true; continue; }
                 const isBracketTitle = /^【[^】]+】/.test(trimmedLine);
                 const isSubPoint = /^\d+[>)）]/.test(trimmedLine);
-
                 if (lastLineEmpty || isBracketTitle || isSubPoint) {
                     if (currentContent) items.push({ content: currentContent.trim(), confirmed: false, confirmedBy: '', confirmedTime: '' });
                     currentContent = trimmedLine;
@@ -401,10 +395,10 @@
             return c.replace(/(\d{4}年)?\d{1,2}月\d{1,2}日|\d{1,2}:\d{2}/g, '<span class="highlight">$&</span>').replace(/(\d+)(级|倍|折|次|个|名|期)/g, '<span class="highlight">$1</span>$2').replace(/\n/g, '<br>');
         }
 
-        function confirmItem(i) { if (!selectedIdentity) { document.getElementById('identityHint').classList.add('show'); return; } announcements[i].confirmed = true; announcements[i].confirmedBy = selectedIdentity; announcements[i].confirmedTime = new Date().toLocaleTimeString('zh-CN', {hour: '2-digit', minute: '2-digit'}); saveToFirebase(); renderAnnouncementList(); }
-        function unconfirmItem(i) { announcements[i].confirmed = false; saveToFirebase(); renderAnnouncementList(); }
+        function confirmItem(i) { if (!selectedIdentity) { document.getElementById('identityHint').classList.add('show'); return; } announcements[i].confirmed = true; announcements[i].confirmedBy = selectedIdentity; announcements[i].confirmedTime = new Date().toLocaleTimeString('zh-CN', {hour: '2-digit', minute: '2-digit'}); saveToFirebase(); }
+        function unconfirmItem(i) { announcements[i].confirmed = false; saveToFirebase(); }
         function editItem(i) { document.getElementById(`edit-${i}`).classList.add('show'); }
-        function saveEdit(i) { const c = document.getElementById(`textarea-${i}`).value.trim(); if (c) { announcements[i].content = c; announcements[i].confirmed = false; saveToFirebase(); renderAnnouncementList(); } }
+        function saveEdit(i) { const c = document.getElementById(`textarea-${i}`).value.trim(); if (c) { announcements[i].content = c; announcements[i].confirmed = false; saveToFirebase(); } }
         function cancelEdit(i) { document.getElementById(`edit-${i}`).classList.remove('show'); }
         function copyItem(i) { copyToClipboard(announcements[i].content); showToast('已复制该条内容'); }
         function checkAllConfirmed() { const ok = announcements.length > 0 && announcements.every(item => item.confirmed); document.getElementById('finalAnnouncement').classList.toggle('show', ok); if (ok) document.getElementById('finalContent').innerHTML = highlightContent(announcements.map(item => item.content).join('\n\n')); }
