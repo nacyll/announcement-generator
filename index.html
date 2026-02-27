@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>公告生成器 - 多人协作版</title>
+    <title>公告生成器</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -28,16 +28,6 @@
         }
         .header h1 { font-size: 28px; margin-bottom: 8px; }
         .header p { opacity: 0.9; font-size: 14px; }
-        .sync-status {
-            display: inline-block;
-            padding: 6px 14px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 20px;
-            font-size: 13px;
-            margin-top: 12px;
-        }
-        .sync-status.online { background: #4caf50; }
-        .sync-status.offline { background: #f44336; }
         .content { padding: 30px; }
         .section { margin-bottom: 30px; }
         .section-title {
@@ -53,7 +43,7 @@
             display: inline-block;
             width: 4px;
             height: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #667eea;
             margin-right: 10px;
             border-radius: 2px;
         }
@@ -63,27 +53,25 @@
             gap: 10px;
         }
         .identity-btn {
-            padding: 14px 20px;
+            padding: 12px 20px;
             border: 2px solid #e0e0e0;
-            border-radius: 10px;
+            border-radius: 8px;
             background: white;
             cursor: pointer;
             transition: all 0.3s;
-            font-size: 15px;
+            font-size: 14px;
             color: #333;
-            font-weight: 500;
         }
-        .identity-btn:hover { border-color: #667eea; background: #f8f9ff; transform: translateY(-2px); }
-        .identity-btn.active { border-color: #667eea; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .identity-btn:hover { border-color: #667eea; background: #f8f9ff; }
+        .identity-btn.active { border-color: #667eea; background: #667eea; color: white; }
         .selected-identity {
             margin-top: 15px;
-            padding: 12px 16px;
-            background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
-            border-radius: 10px;
+            padding: 12px;
+            background: #f8f9ff;
+            border-radius: 8px;
             color: #667eea;
-            font-weight: 600;
+            font-weight: 500;
             display: none;
-            border-left: 4px solid #667eea;
         }
         .selected-identity.show { display: block; }
         textarea {
@@ -91,157 +79,138 @@
             min-height: 200px;
             padding: 15px;
             border: 2px solid #e0e0e0;
-            border-radius: 10px;
+            border-radius: 8px;
             font-size: 14px;
-            line-height: 1.8;
+            line-height: 1.6;
             resize: vertical;
-            transition: border-color 0.3s, box-shadow 0.3s;
+            transition: border-color 0.3s;
             font-family: inherit;
         }
-        textarea:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 4px rgba(102,126,234,0.1); }
+        textarea:focus { outline: none; border-color: #667eea; }
         .generate-btn {
             width: 100%;
-            padding: 16px;
+            padding: 15px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            border-radius: 10px;
+            border-radius: 8px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             margin-top: 15px;
-            transition: transform 0.2s, box-shadow 0.2s;
         }
-        .generate-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102,126,234,0.4); }
-        .generate-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .generate-btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .announcement-list { display: none; }
         .announcement-list.show { display: block; }
         .announcement-item {
             background: #f8f9fa;
-            border-radius: 12px;
-            padding: 18px;
-            margin-bottom: 14px;
-            transition: all 0.3s;
-            border: 2px solid transparent;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 12px;
         }
-        .announcement-item:hover { box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
-        .announcement-item.confirmed { background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%); border-color: #4caf50; }
+        .announcement-item.confirmed { background: #e8f5e9; }
         .item-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            gap: 15px;
         }
         .item-content {
             flex: 1;
-            line-height: 1.8;
+            line-height: 1.6;
             color: #333;
             white-space: pre-wrap;
             word-wrap: break-word;
-            font-size: 14px;
         }
-        .item-content .highlight { color: #e53935; font-weight: 600; }
+        .item-content .highlight { color: #e53935; font-weight: 500; }
         .item-actions {
             display: flex;
             gap: 8px;
             flex-shrink: 0;
+            margin-left: 10px;
             flex-wrap: wrap;
             justify-content: flex-end;
         }
         .action-btn {
-            padding: 8px 14px;
+            padding: 6px 12px;
             border: none;
-            border-radius: 8px;
+            border-radius: 6px;
             font-size: 13px;
             cursor: pointer;
-            transition: all 0.2s;
-            font-weight: 500;
         }
-        .action-btn:hover { transform: translateY(-1px); }
         .confirm-btn { background: #4caf50; color: white; }
-        .confirm-btn:hover { background: #43a047; }
-        .confirm-btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+        .confirm-btn:disabled { background: #ccc; cursor: not-allowed; }
         .unconfirm-btn { background: #f44336; color: white; }
-        .unconfirm-btn:hover { background: #e53935; }
         .edit-btn { background: #2196f3; color: white; }
-        .edit-btn:hover { background: #1e88e5; }
         .copy-btn { background: #ff9800; color: white; }
-        .copy-btn:hover { background: #f57c00; }
         .confirmed-badge {
             display: none;
             align-items: center;
-            gap: 4px;
             color: #4caf50;
             font-size: 13px;
-            font-weight: 600;
-            padding: 6px 12px;
+            font-weight: 500;
+            padding: 4px 10px;
             background: white;
-            border-radius: 20px;
-            border: 2px solid #4caf50;
+            border-radius: 12px;
+            border: 1px solid #4caf50;
         }
         .confirmed-badge.show { display: flex; }
-        .edit-area { display: none; margin-top: 12px; }
+        .edit-area { display: none; margin-top: 10px; }
         .edit-area.show { display: block; }
         .edit-textarea {
             width: 100%;
             min-height: 100px;
-            padding: 12px;
+            padding: 10px;
             border: 2px solid #2196f3;
-            border-radius: 8px;
+            border-radius: 6px;
             font-size: 14px;
             line-height: 1.6;
             resize: vertical;
             font-family: inherit;
         }
-        .edit-actions { display: flex; gap: 8px; margin-top: 10px; }
+        .edit-actions { display: flex; gap: 8px; margin-top: 8px; }
         .save-btn, .cancel-btn {
-            padding: 10px 20px;
+            padding: 8px 16px;
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 6px;
             cursor: pointer;
-            font-weight: 500;
         }
         .save-btn { background: #4caf50; }
         .cancel-btn { background: #757575; }
         .final-announcement {
             display: none;
-            background: linear-gradient(135deg, #f5f5f5 0%, #eeeeee 100%);
-            border-radius: 12px;
-            padding: 25px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 20px;
             margin-top: 30px;
-            border: 2px solid #4caf50;
         }
         .final-announcement.show { display: block; }
         .final-title {
             font-size: 18px;
             font-weight: 600;
             color: #333;
-            margin-bottom: 18px;
+            margin-bottom: 15px;
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
         .final-content {
             background: white;
-            padding: 25px;
-            border-radius: 10px;
-            line-height: 1.9;
+            padding: 20px;
+            border-radius: 8px;
+            line-height: 1.8;
             white-space: pre-wrap;
             max-height: 500px;
             overflow-y: auto;
-            font-size: 14px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
         .copy-all-btn {
-            padding: 12px 24px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 10px 20px;
+            background: #667eea;
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 6px;
             cursor: pointer;
             font-size: 14px;
-            font-weight: 600;
         }
         .toast {
             position: fixed;
@@ -249,45 +218,37 @@
             right: 20px;
             background: #323232;
             color: white;
-            padding: 14px 24px;
-            border-radius: 10px;
+            padding: 12px 20px;
+            border-radius: 6px;
             opacity: 0;
             transition: opacity 0.3s;
             z-index: 1000;
-            font-weight: 500;
         }
         .toast.show { opacity: 1; }
         .identity-hint {
             color: #f44336;
             font-size: 13px;
-            margin-top: 12px;
+            margin-top: 10px;
             display: none;
-            padding: 10px 14px;
-            background: #ffebee;
-            border-radius: 8px;
         }
         .identity-hint.show { display: block; }
-        .empty-state {
-            text-align: center;
-            padding: 50px 20px;
-            color: #999;
-        }
-        .empty-state-icon { font-size: 48px; margin-bottom: 15px; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>📢 公告生成器</h1>
-            <p>多人实时协作 · 输入内容 → 选择身份 → 确认生成</p>
-            <div class="sync-status" id="syncStatus">🔄 连接中...</div>
+            <p>输入内容 → 选择身份 → 确认生成</p>
         </div>
         <div class="content">
+            <!-- 步骤1: 输入公告内容 -->
             <div class="section">
                 <div class="section-title">步骤 1：输入公告内容</div>
                 <textarea id="announcementInput" placeholder="请输入公告内容..."></textarea>
                 <button class="generate-btn" id="generateBtn" disabled>生成公告列表</button>
             </div>
+
+            <!-- 步骤2: 选择身份 -->
             <div class="section">
                 <div class="section-title">步骤 2：选择操作身份</div>
                 <div class="identity-selector">
@@ -299,93 +260,224 @@
                 <div class="selected-identity" id="selectedIdentity">当前操作者：<span id="identityName"></span></div>
                 <div class="identity-hint" id="identityHint">⚠️ 请先选择身份后再确认公告</div>
             </div>
+
+            <!-- 步骤3: 公告列表 -->
             <div class="section">
                 <div class="section-title">步骤 3：确认公告内容</div>
-                <div class="announcement-list" id="announcementList">
-                    <div class="empty-state"><div class="empty-state-icon">📝</div><p>点击上方"生成公告列表"开始</p></div>
-                </div>
+                <div class="announcement-list" id="announcementList"></div>
             </div>
+
+            <!-- 最终公告 -->
             <div class="final-announcement" id="finalAnnouncement">
-                <div class="final-title"><span>✅ 正式公告（全部确认完成）</span><button class="copy-all-btn" id="copyAllBtn">📋 一键复制</button></div>
+                <div class="final-title">
+                    <span>✅ 正式公告</span>
+                    <button class="copy-all-btn" id="copyAllBtn">📋 一键复制</button>
+                </div>
                 <div class="final-content" id="finalContent"></div>
             </div>
         </div>
     </div>
     <div class="toast" id="toast"></div>
 
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-    
     <script>
-        // ⚠️⚠️⚠️ 把下面这段替换成你从 Firebase 复制的配置 ⚠️⚠️⚠️
-        const firebaseConfig = {
-          apiKey: "AIzaSyDh5lG_Y-vi4JJz0BKGciJozuTUzyc_Uqs",
-          authDomain: "announcement-1d3b8.firebaseapp.com",
-          databaseURL: "https://announcement-1d3b8-default-rtdb.firebaseio.com",
-          projectId: "announcement-1d3b8",
-          storageBucket: "announcement-1d3b8.firebasestorage.app",
-          messagingSenderId: "211900035801",
-          appId: "1:211900035801:web:8336d3fca5e97c152784c8",
-          measurementId: "G-JTH1FG6378"
-        };
-
-
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-        const dataRef = database.ref('announcement');
         let selectedIdentity = '';
         let announcements = [];
 
-        function init() {
-            setupEventListeners();
-            dataRef.on('value', snapshot => {
-                const data = snapshot.val();
-                if (data && data.items) { announcements = data.items; renderList(); document.getElementById('announcementList').classList.add('show'); }
-                document.getElementById('syncStatus').textContent = '🟢 已连接'; document.getElementById('syncStatus').className = 'sync-status online';
-            });
-        }
-
-        function setupEventListeners() {
-            document.querySelectorAll('.identity-btn').forEach(btn => btn.addEventListener('click', function() {
+        // 身份选择
+        document.querySelectorAll('.identity-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
                 document.querySelectorAll('.identity-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active'); selectedIdentity = this.dataset.name;
+                this.classList.add('active');
+                selectedIdentity = this.dataset.name;
                 document.getElementById('identityName').textContent = selectedIdentity;
                 document.getElementById('selectedIdentity').classList.add('show');
-                document.getElementById('identityHint').classList.remove('show'); renderList();
-            }));
-            document.getElementById('announcementInput').addEventListener('input', function() { document.getElementById('generateBtn').disabled = !this.value.trim(); });
-            document.getElementById('generateBtn').addEventListener('click', generate);
-            document.getElementById('copyAllBtn').addEventListener('click', () => { copyText(announcements.map(i => i.content).join('\n\n')); showToast('已复制完整公告'); });
-        }
-
-        function generate() {
-            const input = document.getElementById('announcementInput').value.trim(); if (!input) return;
-            announcements = input.split(/\n(?=[一二三四五六七八九十]+\.|(?:\d+\.)(?!\d)|—{3,})/).filter(s => s.trim()).map(c => ({ content: c.trim(), confirmed: false, confirmedBy: '', confirmedTime: '' }));
-            dataRef.set({ items: announcements, timestamp: Date.now() }); showToast('公告列表已生成');
-        }
-
-        function renderList() {
-            const el = document.getElementById('announcementList'); el.innerHTML = '';
-            if (!announcements.length) { el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📝</div><p>暂无内容</p></div>'; return; }
-            announcements.forEach((item, i) => {
-                const div = document.createElement('div'); div.className = 'announcement-item' + (item.confirmed ? ' confirmed' : '');
-                div.innerHTML = `<div class="item-header"><div class="item-content">${item.content.replace(/(\d{4}年)?\d{1,2}月\d{1,2}日|\d{1,2}:\d{2}/g, '<span class="highlight">$&</span>').replace(/(\d+)(级|倍|折|次|个|名|期)/g, '<span class="highlight">$1</span>$2').replace(/\n/g, '<br>')}</div>
-                <div class="item-actions">${!item.confirmed ? `<button class="action-btn confirm-btn" onclick="confirm(${i})" ${!selectedIdentity ? 'disabled' : ''}>✓ 确认</button>` : `<span class="confirmed-badge show">✓ ${item.confirmedBy} ${item.confirmedTime}</span><button class="action-btn unconfirm-btn" onclick="unconfirm(${i})">✗ 取消</button>`}<button class="action-btn edit-btn" onclick="edit(${i})">✎ 编辑</button><button class="action-btn copy-btn" onclick="copyText('${item.content.replace(/'/g, "\\'")}');showToast('已复制')">📋</button></div></div>
-                <div class="edit-area" id="edit-${i}"><textarea class="edit-textarea" id="ta-${i}">${item.content}</textarea><div class="edit-actions"><button class="save-btn" onclick="save(${i})">保存</button><button class="cancel-btn" onclick="document.getElementById('edit-${i}').classList.remove('show')">取消</button></div></div>`;
-                el.appendChild(div);
+                document.getElementById('identityHint').classList.remove('show');
+                renderAnnouncementList();
             });
-            const allDone = announcements.length && announcements.every(i => i.confirmed);
-            document.getElementById('finalAnnouncement').classList.toggle('show', allDone);
-            if (allDone) document.getElementById('finalContent').innerHTML = announcements.map(i => i.content).join('\n\n').replace(/\n/g, '<br>');
+        });
+
+        // 输入内容监听
+        document.getElementById('announcementInput').addEventListener('input', function() {
+            document.getElementById('generateBtn').disabled = !this.value.trim();
+        });
+
+        // 生成列表
+        document.getElementById('generateBtn').addEventListener('click', function() {
+            const input = document.getElementById('announcementInput').value.trim();
+            if (!input) return;
+            announcements = parseAnnouncement(input);
+            renderAnnouncementList();
+            document.getElementById('announcementList').classList.add('show');
+        });
+
+        function parseAnnouncement(text) {
+            const lines = text.split('\n');
+            const items = [];
+            let currentContent = '';
+            let expectingChild = false;
+            let currentLevel = 0;
+
+            const majorPattern = /^([一二三四五六七八九十]+\.|—{3,})/;
+            const minorPattern = /^(\d+\.)(?!\d)/;
+            const subPattern = /^(\d+[>)）])/;
+
+            function getLevel(line) {
+                if (majorPattern.test(line)) return 1;
+                if (minorPattern.test(line)) return 2;
+                if (subPattern.test(line)) return 3;
+                return 0;
+            }
+
+            for (let line of lines) {
+                line = line.trim();
+                if (!line) continue;
+
+                const level = getLevel(line);
+
+                if (level === 0) {
+                    currentContent += (currentContent ? '\n' : '') + line;
+                    expectingChild = false;
+                } else if (expectingChild && level > currentLevel) {
+                    currentContent += '\n' + line;
+                    currentLevel = level;
+                    expectingChild = true;
+                } else {
+                    if (currentContent) {
+                        items.push(createItem(currentContent.trim()));
+                    }
+                    currentContent = line;
+                    currentLevel = level;
+                    expectingChild = true;
+                }
+            }
+
+            if (currentContent) {
+                items.push(createItem(currentContent.trim()));
+            }
+
+            return items;
         }
 
-        function confirm(i) { if (!selectedIdentity) { document.getElementById('identityHint').classList.add('show'); return; } announcements[i].confirmed = true; announcements[i].confirmedBy = selectedIdentity; announcements[i].confirmedTime = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'}); dataRef.set({ items: announcements, timestamp: Date.now() }); }
-        function unconfirm(i) { announcements[i].confirmed = false; announcements[i].confirmedBy = ''; announcements[i].confirmedTime = ''; dataRef.set({ items: announcements, timestamp: Date.now() }); }
-        function edit(i) { document.getElementById(`edit-${i}`).classList.add('show'); }
-        function save(i) { const c = document.getElementById(`ta-${i}`).value.trim(); if (c) { announcements[i].content = c; announcements[i].confirmed = false; dataRef.set({ items: announcements, timestamp: Date.now() }); } }
-        function copyText(t) { navigator.clipboard.writeText(t).catch(() => { const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); document.execCommand('copy'); document.body.removeChild(a); }); }
-        function showToast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
-        init();
+        function createItem(content) {
+            return { content, confirmed: false, confirmedBy: '', confirmedTime: '' };
+        }
+
+        function renderAnnouncementList() {
+            const container = document.getElementById('announcementList');
+            container.innerHTML = '';
+
+            announcements.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'announcement-item' + (item.confirmed ? ' confirmed' : '');
+                div.innerHTML = `
+                    <div class="item-header">
+                        <div class="item-content">${highlightContent(item.content)}</div>
+                        <div class="item-actions">
+                            ${!item.confirmed ? `
+                                <button class="action-btn confirm-btn" onclick="confirmItem(${index})" ${!selectedIdentity ? 'disabled' : ''}>✓ 确认</button>
+                            ` : `
+                                <span class="confirmed-badge show">✓ ${item.confirmedBy} ${item.confirmedTime}</span>
+                                <button class="action-btn unconfirm-btn" onclick="unconfirmItem(${index})">✗ 取消</button>
+                            `}
+                            <button class="action-btn edit-btn" onclick="editItem(${index})">✎ 编辑</button>
+                            <button class="action-btn copy-btn" onclick="copyItem(${index})">📋 复制</button>
+                        </div>
+                    </div>
+                    <div class="edit-area" id="edit-${index}">
+                        <textarea class="edit-textarea" id="textarea-${index}">${item.content}</textarea>
+                        <div class="edit-actions">
+                            <button class="save-btn" onclick="saveEdit(${index})">保存</button>
+                            <button class="cancel-btn" onclick="cancelEdit(${index})">取消</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+
+            checkAllConfirmed();
+        }
+
+        function highlightContent(content) {
+            return content
+                .replace(/(\d{4}年)?\d{1,2}月\d{1,2}日|\d{1,2}:\d{2}/g, '<span class="highlight">$&</span>')
+                .replace(/(\d+)(级|倍|折|次|个|名|期)/g, '<span class="highlight">$1</span>$2')
+                .replace(/\n/g, '<br>');
+        }
+
+        function confirmItem(index) {
+            if (!selectedIdentity) {
+                document.getElementById('identityHint').classList.add('show');
+                return;
+            }
+            announcements[index].confirmed = true;
+            announcements[index].confirmedBy = selectedIdentity;
+            announcements[index].confirmedTime = new Date().toLocaleTimeString('zh-CN', {hour: '2-digit', minute: '2-digit'});
+            renderAnnouncementList();
+        }
+
+        function unconfirmItem(index) {
+            announcements[index].confirmed = false;
+            announcements[index].confirmedBy = '';
+            announcements[index].confirmedTime = '';
+            renderAnnouncementList();
+        }
+
+        function editItem(index) {
+            document.getElementById(`edit-${index}`).classList.add('show');
+        }
+
+        function saveEdit(index) {
+            const newContent = document.getElementById(`textarea-${index}`).value.trim();
+            if (newContent) {
+                announcements[index].content = newContent;
+                announcements[index].confirmed = false;
+                renderAnnouncementList();
+            }
+        }
+
+        function cancelEdit(index) {
+            document.getElementById(`edit-${index}`).classList.remove('show');
+        }
+
+        function copyItem(index) {
+            copyToClipboard(announcements[index].content);
+            showToast('已复制该条内容');
+        }
+
+        function checkAllConfirmed() {
+            const allConfirmed = announcements.length > 0 && announcements.every(item => item.confirmed);
+            if (allConfirmed) {
+                const content = announcements.map(item => item.content).join('\n\n');
+                document.getElementById('finalContent').innerHTML = highlightContent(content);
+                document.getElementById('finalAnnouncement').classList.add('show');
+            } else {
+                document.getElementById('finalAnnouncement').classList.remove('show');
+            }
+        }
+
+        document.getElementById('copyAllBtn').addEventListener('click', function() {
+            const content = announcements.map(item => item.content).join('\n\n');
+            copyToClipboard(content);
+            showToast('已复制完整公告');
+        });
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).catch(() => {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+            });
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
     </script>
 </body>
 </html>
