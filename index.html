@@ -371,7 +371,7 @@
                 const trimmedLine = line.trim();
                 if (!trimmedLine) { lastLineEmpty = true; continue; }
                 const isBracketTitle = /^【[^】]+】/.test(trimmedLine);
-                const isSubPoint = /^\d+[>)）]/.test(trimmedLine);
+                const isSubPoint = /^\d+[.。>)）]/.test(trimmedLine);
                 if (lastLineEmpty || isBracketTitle || isSubPoint) {
                     if (currentContent) items.push({ content: currentContent.trim(), confirmed: false, confirmedBy: '', confirmedTime: '' });
                     currentContent = trimmedLine;
@@ -425,3 +425,4 @@
     </script>
 </body>
 </html>
+
